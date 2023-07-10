@@ -3,6 +3,7 @@ package me.leozdgao.beaver.dispatcher;
 import com.lmax.disruptor.EventHandler;
 
 /**
+ * 收到任务入队请求，开始执行调度逻辑
  * @author leozdgao
  */
 public class TaskEventHandler implements EventHandler<TaskEvent> {

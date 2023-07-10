@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit test for simple Dispatcher.
+ * Unit test for simple TaskDispatcher.
  */
 public class AppTest 
     extends TestCase
