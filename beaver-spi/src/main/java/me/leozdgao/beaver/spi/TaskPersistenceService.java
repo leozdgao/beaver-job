@@ -1,4 +1,7 @@
-package me.leozdgao.beaver.dispatcher;
+package me.leozdgao.beaver.spi;
+
+import me.leozdgao.beaver.spi.model.Task;
+import me.leozdgao.beaver.spi.model.TaskStatus;
 
 /**
  * 任务数据持久化服务
@@ -9,5 +12,5 @@ public interface TaskPersistenceService {
 
     void createTask(Task task, TaskStatus status);
 
-    void updateTaskStatus(TaskStatus status);
+    void updateTaskStatus(Task task, TaskStatus status);
 }

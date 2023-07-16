@@ -5,6 +5,12 @@
     <file url="file://$PROJECT_DIR$/beaver-agent/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/beaver-dispatcher/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/beaver-dispatcher/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/beaver-infrastructure/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/beaver-infrastructure/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/beaver-spi/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/beaver-spi/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/beaver-start/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/beaver-start/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/beaver-web/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/beaver-web/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/beaver-worker-manager/src/main/java" charset="UTF-8" />

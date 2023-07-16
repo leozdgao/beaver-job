@@ -1,23 +1,38 @@
 package me.leozdgao.beaver.dispatcher;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
+import jakarta.inject.Inject;
+import me.leozdgao.beaver.dispatcher.config.DispatcherModule;
+import me.leozdgao.beaver.dispatcher.config.DispatcherModule.RingBufferSize;
+import me.leozdgao.beaver.spi.TaskPersistenceService;
+import me.leozdgao.beaver.spi.model.Task;
+import me.leozdgao.beaver.spi.model.TaskStatus;
 
 /**
  * @author leozdgao
  */
 public class TaskDispatcher {
-    /**
-     * 用于阻塞队列的 RingBuffer 最大长度
-     */
-    private static final int RING_BUFFER_SIZE = 1024;
-
     private Disruptor<TaskEvent> disruptor;
 
     private TaskPersistenceService taskPersistenceService;
 
-    public TaskDispatcher(TaskPersistenceService taskPersistenceService) {
+    private EventHandler<TaskEvent> eventHandler;
+
+    private int ringBufferSize = 1024;
+
+    @Inject
+    public TaskDispatcher(
+        TaskPersistenceService taskPersistenceService,
+        EventHandler<TaskEvent> eventHandler,
+        @RingBufferSize int ringBufferSize) {
+
         this.taskPersistenceService = taskPersistenceService;
+        this.eventHandler = eventHandler;
+        this.ringBufferSize = ringBufferSize;
     }
 
     /**
@@ -30,8 +45,8 @@ public class TaskDispatcher {
         // 初始化等待队列
         TaskEventFactory taskEventFactory = new TaskEventFactory();
         // FIXME: 线程池
-        disruptor = new Disruptor<>(taskEventFactory, RING_BUFFER_SIZE, DaemonThreadFactory.INSTANCE);
-        disruptor.handleEventsWith(new TaskEventHandler());
+        disruptor = new Disruptor<>(taskEventFactory, ringBufferSize, DaemonThreadFactory.INSTANCE);
+        disruptor.handleEventsWith(eventHandler);
         disruptor.start();
     }
 
@@ -44,7 +59,7 @@ public class TaskDispatcher {
 
     public boolean accept(Task task) {
         // 首先落库, 直接把状态设置为 WAITING
-        taskPersistenceService.createTask(task, TaskStatus.WAITING);
+        taskPersistenceService.createTask(task, TaskStatus.REQUESTING);
 
         // 成功则修改任务状态为 WAITING
         // 入等待队列
@@ -52,27 +67,17 @@ public class TaskDispatcher {
         // FIXME: 入队失败是否抛出异常？入队超时时间？
         try {
             disruptor.publishEvent((e, l) -> {
+                // NOTE: 这个函数不论执行成功与否，event 都会被 publish
                 e.setTask(task);
                 e.setSeq(l);
+
+                taskPersistenceService.updateTaskStatus(task, TaskStatus.WAITING);
             });
             return true;
         } catch (Exception e) {
-            // 如果最终入队列失败，
-            taskPersistenceService.updateTaskStatus(TaskStatus.REQUESTING);
+            // 如果最终入队列失败，记录日志
         }
 
         return false;
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        //TaskDispatcher dispatcher = new TaskDispatcher();
-        //dispatcher.init();
-        //
-        //for (int i = 0, l = 1000; i < l; i++) {
-        //    dispatcher.accept(new Task());
-        //}
-        //
-        //
-        //Thread.sleep(5 * 1000);
     }
 }

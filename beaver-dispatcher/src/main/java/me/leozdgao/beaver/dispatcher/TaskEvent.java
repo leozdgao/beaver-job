@@ -1,6 +1,7 @@
 package me.leozdgao.beaver.dispatcher;
 
 import lombok.Data;
+import me.leozdgao.beaver.spi.model.Task;
 
 /**
  * @author leozdgao

@@ -1,4 +1,4 @@
-package me.leozdgao.beaver.dispatcher;
+package me.leozdgao.beaver.spi.model;
 
 import lombok.Data;
 
