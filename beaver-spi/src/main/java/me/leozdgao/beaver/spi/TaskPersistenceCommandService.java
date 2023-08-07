@@ -7,7 +7,7 @@ import me.leozdgao.beaver.spi.model.TaskStatus;
  * 任务数据持久化服务
  * @author zhendong.gzd
  */
-public interface TaskPersistenceService {
+public interface TaskPersistenceCommandService {
     void createTask(Task task);
 
     void createTask(Task task, TaskStatus status);

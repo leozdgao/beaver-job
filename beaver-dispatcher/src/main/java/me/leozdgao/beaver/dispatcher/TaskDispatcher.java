@@ -1,14 +1,11 @@
 package me.leozdgao.beaver.dispatcher;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 import jakarta.inject.Inject;
-import me.leozdgao.beaver.dispatcher.config.DispatcherModule;
 import me.leozdgao.beaver.dispatcher.config.DispatcherModule.RingBufferSize;
-import me.leozdgao.beaver.spi.TaskPersistenceService;
+import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.spi.model.TaskStatus;
 
@@ -18,7 +15,7 @@ import me.leozdgao.beaver.spi.model.TaskStatus;
 public class TaskDispatcher {
     private Disruptor<TaskEvent> disruptor;
 
-    private TaskPersistenceService taskPersistenceService;
+    private TaskPersistenceCommandService taskPersistenceService;
 
     private EventHandler<TaskEvent> eventHandler;
 
@@ -26,7 +23,7 @@ public class TaskDispatcher {
 
     @Inject
     public TaskDispatcher(
-        TaskPersistenceService taskPersistenceService,
+        TaskPersistenceCommandService taskPersistenceService,
         EventHandler<TaskEvent> eventHandler,
         @RingBufferSize int ringBufferSize) {
 
