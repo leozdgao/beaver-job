@@ -186,13 +186,10 @@ public class SqlSessionTemplate implements SqlSession {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             try (SqlSession session = SqlSessionTemplate.this.sqlSessionFactory.openSession()) {
-                System.out.println("open session");
                 Object result = method.invoke(session, args);
 
-                // 判断不是事务模式的情况下再自动提交事务
+                // FIXME: 判断不是事务模式的情况下再自动提交事务
                 session.commit();
-
-                System.out.println("commit session");
 
                 return result;
             }

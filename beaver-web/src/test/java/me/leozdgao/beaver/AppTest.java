@@ -1,11 +1,11 @@
-package org.example;
+package me.leozdgao.beaver;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit test for simple App.
+ * Unit test for simple BeaverTaskController.
  */
 public class AppTest 
     extends TestCase

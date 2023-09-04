@@ -19,14 +19,18 @@ public class TaskSinglePersistenceServiceImpl implements TaskPersistenceCommandS
     }
 
     @Override
-    public void createTask(Task task) {
-        createTask(task, TaskStatus.REQUESTING);
+    public Task createTask(Task task) {
+        return createTask(task, TaskStatus.REQUESTING);
     }
 
     @Override
-    public void createTask(Task task, TaskStatus status) {
+    public Task createTask(Task task, TaskStatus status) {
         // TODO: 雪花算法生成 ID
         System.out.printf("Create task: %s, status %s\n", task, status);
+
+        // taskMapper.createTask();
+
+        return task;
     }
 
     @Override

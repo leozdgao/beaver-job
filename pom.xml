@@ -16,15 +16,20 @@
   <modules>
     <module>beaver-agent</module>
     <module>beaver-dispatcher</module>
-    <module>beaver-worker-manager</module>
     <module>beaver-web</module>
     <module>beaver-infrastructure</module>
     <module>beaver-spi</module>
     <module>beaver-start</module>
+    <module>beaver-client</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>me.leozdgao.beaver</groupId>
+        <artifactId>beaver-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>me.leozdgao.beaver</groupId>
         <artifactId>beaver-spi</artifactId>
@@ -40,21 +45,30 @@
         <artifactId>beaver-infrastructure</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <!-- 核心库 -->
       <dependency>
         <groupId>com.lmax</groupId>
         <artifactId>disruptor</artifactId>
         <version>3.4.2</version>
       </dependency>
       <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <version>1.18.24</version>
-      </dependency>
-      <dependency>
         <groupId>com.google.inject</groupId>
         <artifactId>guice</artifactId>
         <version>7.0.0</version>
       </dependency>
+      <!-- 工具库 -->
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.24</version>
+      </dependency>
+      <!-- 服务部署（adaptor）依赖 -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+        <version>2.6.4</version>
+      </dependency>
+      <!-- 数据源依赖 -->
       <dependency>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis</artifactId>
@@ -70,6 +84,7 @@
         <artifactId>HikariCP</artifactId>
         <version>5.0.1</version>
       </dependency>
+      <!-- 测试依赖 -->
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

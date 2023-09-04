@@ -8,9 +8,9 @@ import me.leozdgao.beaver.spi.model.TaskStatus;
  * @author zhendong.gzd
  */
 public interface TaskPersistenceCommandService {
-    void createTask(Task task);
+    Task createTask(Task task);
 
-    void createTask(Task task, TaskStatus status);
+    Task createTask(Task task, TaskStatus status);
 
     void updateTaskStatus(Task task, TaskStatus status);
 }

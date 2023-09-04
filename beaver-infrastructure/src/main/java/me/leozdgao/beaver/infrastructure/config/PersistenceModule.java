@@ -6,9 +6,11 @@ import com.zaxxer.hikari.HikariDataSource;
 import jakarta.inject.Singleton;
 import me.leozdgao.beaver.infrastructure.BeaverProperties;
 import me.leozdgao.beaver.infrastructure.SqlSessionTemplate;
+import me.leozdgao.beaver.infrastructure.TaskPersistenceQueryServiceImpl;
 import me.leozdgao.beaver.infrastructure.TaskSinglePersistenceServiceImpl;
 import me.leozdgao.beaver.infrastructure.mapper.TaskMapper;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
+import me.leozdgao.beaver.spi.TaskPersistenceQueryService;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -29,7 +31,7 @@ public class PersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(TaskPersistenceCommandService.class).to(TaskSinglePersistenceServiceImpl.class);
-        //bind(TaskPersistenceQueryService.class).to(TaskSinglePersistenceServiceImpl.class);
+        bind(TaskPersistenceQueryService.class).to(TaskPersistenceQueryServiceImpl.class);
     }
 
     @Provides
