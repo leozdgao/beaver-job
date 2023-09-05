@@ -18,7 +18,7 @@
         extra
     </sql>
 
-    <select id="findTaskPage" resultType="me.leozdgao.beaver.infrastructure.dataobject.TaskDO">
+    <select id="findTaskPage" resultType="me.leozdgao.beaver.infrastructure.dataobject.TaskDO" timeout="1000">
         SELECT
         <include refid="selectColumnsForList" />
         FROM tasks
@@ -28,20 +28,20 @@
             task_status = #{taskStatus} </if>
         </where>
         ORDER BY gmt_create DESC
-        OFFSET #{(pageIndex - 1) * pageSize}
         LIMIT #{pageSize}
+        OFFSET ${(pageIndex - 1) * pageSize}
     </select>
 
-    <select id="findOneById" resultType="me.leozdgao.beaver.infrastructure.dataobject.TaskDO">
+    <select id="findOneById" resultType="me.leozdgao.beaver.infrastructure.dataobject.TaskDO" timeout="1000">
         SELECT
         <include refid="selectColumnsForDetail" />
         FROM tasks
         WHERE id = #{id}
     </select>
 
-    <select id="getTaskCount">
+    <select id="getTaskCount" timeout="1000" resultType="long">
         SELECT
-            COUNT(*)
+            COUNT(*) as cnt
         FROM tasks
         <where>
             scope = #{scope} <if test="taskType != null and '' != taskType"> AND
@@ -49,8 +49,8 @@
             task_status = #{taskStatus} </if>
         </where>
         ORDER BY gmt_create DESC
-        OFFSET #{(pageIndex - 1) * pageSize}
         LIMIT #{pageSize}
+        OFFSET ${(pageIndex - 1) * pageSize}
     </select>
 
     <insert id="batchCreateTask">

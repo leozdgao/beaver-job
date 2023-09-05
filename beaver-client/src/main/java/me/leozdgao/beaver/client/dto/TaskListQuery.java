@@ -11,4 +11,5 @@ public class TaskListQuery {
     private Integer taskStatus;
     private Long pageIndex = 1L;
     private Long pageSize = 20L;
+    private String scope = "DEFAULT";
 }

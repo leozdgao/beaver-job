@@ -21,6 +21,8 @@ public class Response<T> {
         Response<T> res = new Response<>();
         res.setSuccess(true);
         res.setData(data);
+        res.setCode("OK");
+        res.setMessage("success");
         return res;
     }
 
