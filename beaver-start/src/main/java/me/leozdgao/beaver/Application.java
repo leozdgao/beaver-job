@@ -1,40 +1,48 @@
 package me.leozdgao.beaver;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import me.leozdgao.beaver.dispatcher.TaskDispatcher;
 import me.leozdgao.beaver.dispatcher.config.DispatcherModule;
 import me.leozdgao.beaver.infrastructure.BeaverProperties;
+import me.leozdgao.beaver.infrastructure.config.JsonModule;
 import me.leozdgao.beaver.infrastructure.config.PersistenceModule;
-import me.leozdgao.beaver.infrastructure.dataobject.TaskDO;
-import me.leozdgao.beaver.infrastructure.mapper.TaskMapper;
-import me.leozdgao.beaver.spi.model.Task;
+import me.leozdgao.beaver.spi.TaskPersistenceQueryService;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.io.IOException;
 
 /**
  * @author zhendong.gzd
  */
+@SpringBootApplication
 public class Application {
     public static void main(String[] args) throws Exception {
         // 正常而言这里应该是启动 Web 应用
+        SpringApplication.run(Application.class, args);
 
-        demo();
+        // demo();
     }
 
     private static void demo() throws IOException {
         BeaverProperties properties = BeaverProperties.loadFromFile();
         Injector injector = Guice.createInjector(
             new DispatcherModule(),
-            new PersistenceModule(properties)
+            new PersistenceModule(properties),
+            new JsonModule()
         );
-        TaskDispatcher taskDispatcher = injector.getInstance(TaskDispatcher.class);
-        taskDispatcher.init();
 
-        TaskMapper taskMapper = injector.getInstance(TaskMapper.class);
-        List<TaskDO> lists = taskMapper.findAllTask();
-        System.out.println(lists);
+        TaskPersistenceQueryService taskPersistenceQueryService =
+                injector.getInstance(TaskPersistenceQueryService.class);
+
+        // TaskConverter taskConverter = injector.getInstance(TaskConverter.class);
+
+        // TaskDispatcher taskDispatcher = injector.getInstance(TaskDispatcher.class);
+        // taskDispatcher.init();
+        //
+        // TaskMapper taskMapper = injector.getInstance(TaskMapper.class);
+        // List<TaskDO> lists = taskMapper.findTaskPage(null);
+        // System.out.println(lists);
 
         //for (int i = 0; i < 10; i++) {
         //    Task task = new Task();

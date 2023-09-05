@@ -5,8 +5,10 @@ import com.google.inject.Injector;
 import me.leozdgao.beaver.dispatcher.TaskDispatcher;
 import me.leozdgao.beaver.dispatcher.config.DispatcherModule;
 import me.leozdgao.beaver.infrastructure.BeaverProperties;
+import me.leozdgao.beaver.infrastructure.config.JsonModule;
 import me.leozdgao.beaver.infrastructure.config.PersistenceModule;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
+import me.leozdgao.beaver.spi.TaskPersistenceQueryService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,7 +25,8 @@ public class BeaverCoreConfig {
         BeaverProperties properties = BeaverProperties.loadFromFile();
         return Guice.createInjector(
                 new DispatcherModule(),
-                new PersistenceModule(properties)
+                new PersistenceModule(properties),
+                new JsonModule()
         );
     }
 
@@ -33,6 +36,11 @@ public class BeaverCoreConfig {
         taskDispatcher.init();
 
         return taskDispatcher;
+    }
+
+    @Bean
+    public TaskPersistenceQueryService taskPersistenceQueryService(Injector injector) {
+        return injector.getInstance(TaskPersistenceQueryService.class);
     }
 
     @Bean

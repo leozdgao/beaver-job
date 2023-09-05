@@ -1,5 +1,6 @@
 package me.leozdgao.beaver.infrastructure.dataobject;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

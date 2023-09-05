@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/schema/mybatis-3-mapper.dtd">
+<mapper namespace="me.leozdgao.beaver.infrastructure.mapper.TaskMapper">
+    <sql id="selectColumnsForList">
+        id,
+        gmt_create,
+        gmt_modified,
+        scope,
+        task_type,
+        task_status
+    </sql>
+    <sql id="selectColumnsForDetail">
+        <include refid="selectColumnsForList" />,
+        payload,
+        result,
+        extra
+    </sql>
+
+    <select id="findTaskPage" resultType="me.leozdgao.beaver.infrastructure.dataobject.TaskDO">
+        SELECT
+        <include refid="selectColumnsForList" />
+        FROM tasks
+        <where>
+            scope = #{scope} <if test="taskType != null and '' != taskType"> AND
+            task_type = #{taskType} </if><if test="taskStatus != null"> AND
+            task_status = #{taskStatus} </if>
+        </where>
+        ORDER BY gmt_create DESC
+        OFFSET #{(pageIndex - 1) * pageSize}
+        LIMIT #{pageSize}
+    </select>
+
+    <select id="findOneById" resultType="me.leozdgao.beaver.infrastructure.dataobject.TaskDO">
+        SELECT
+        <include refid="selectColumnsForDetail" />
+        FROM tasks
+        WHERE id = #{id}
+    </select>
+
+    <select id="getTaskCount">
+        SELECT
+            COUNT(*)
+        FROM tasks
+        <where>
+            scope = #{scope} <if test="taskType != null and '' != taskType"> AND
+            task_type = #{taskType} </if><if test="taskStatus != null"> AND
+            task_status = #{taskStatus} </if>
+        </where>
+        ORDER BY gmt_create DESC
+        OFFSET #{(pageIndex - 1) * pageSize}
+        LIMIT #{pageSize}
+    </select>
+
+    <insert id="batchCreateTask">
+        INSERT INTO tasks
+            (scope, task_type, task_status, payload, result, extra)
+        VALUES
+        <foreach collection="list" separator="," item="item">
+            (#{item.scope}, #{item.taskType}, #{item.taskStatus}, #{item.payload}, #{item.result}, #{item.extra})
+        </foreach>
+    </insert>
+    
+    <update id="updateTaskStatus">
+        UPDATE tasks
+        SET task_status = #{taskStatus}
+        WHERE id = #{id}
+    </update>
+</mapper>

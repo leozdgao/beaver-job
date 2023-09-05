@@ -10,13 +10,13 @@ import me.leozdgao.beaver.spi.model.TaskStatus;
  */
 public class TaskShardingPersistenceServiceImpl implements TaskPersistenceCommandService {
     @Override
-    public void createTask(Task task) {
-
+    public Task createTask(Task task) {
+        return null;
     }
 
     @Override
-    public void createTask(Task task, TaskStatus status) {
-
+    public Task createTask(Task task, TaskStatus status) {
+        return null;
     }
 
     @Override

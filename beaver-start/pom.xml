@@ -21,11 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>me.leozdgao.beaver</groupId>
-            <artifactId>beaver-dispatcher</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>me.leozdgao.beaver</groupId>
-            <artifactId>beaver-infrastructure</artifactId>
+            <artifactId>beaver-web</artifactId>
         </dependency>
     </dependencies>
 </project>

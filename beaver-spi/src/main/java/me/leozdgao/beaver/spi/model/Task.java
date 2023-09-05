@@ -15,5 +15,6 @@ public class Task {
     private String type;
     private TaskStatus status;
     private Map<String, Object> payload;
+    private Map<String, Object> result;
     private Map<String, Object> ext;
 }
