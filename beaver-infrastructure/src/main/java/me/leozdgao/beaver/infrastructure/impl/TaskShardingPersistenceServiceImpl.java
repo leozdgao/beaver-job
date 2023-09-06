@@ -1,4 +1,4 @@
-package me.leozdgao.beaver.infrastructure;
+package me.leozdgao.beaver.infrastructure.impl;
 
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;

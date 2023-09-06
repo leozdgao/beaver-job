@@ -5,6 +5,7 @@ import java.util.Map;
 
 import me.leozdgao.beaver.client.dto.TaskListQuery;
 import me.leozdgao.beaver.infrastructure.dataobject.TaskDO;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 /**
@@ -43,5 +44,5 @@ public interface TaskMapper {
      * @param id 任务ID
      * @param status 任务状态
      */
-    void updateTaskStatus(Long id, Integer status);
+    void updateTaskStatus(@Param("id") Long id, @Param("status") Integer status);
 }

@@ -13,6 +13,7 @@ import java.util.Map;
 public class Task {
     private Long id;
     private String type;
+    private String scope;
     private TaskStatus status;
     private Map<String, Object> payload;
     private Map<String, Object> result;

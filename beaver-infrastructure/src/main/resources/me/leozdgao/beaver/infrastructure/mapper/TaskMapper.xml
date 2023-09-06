@@ -8,8 +8,8 @@
         gmt_create,
         gmt_modified,
         scope,
-        task_type,
-        task_status
+        task_type as type,
+        task_status as status
     </sql>
     <sql id="selectColumnsForDetail">
         <include refid="selectColumnsForList" />,
@@ -53,18 +53,18 @@
         OFFSET ${(pageIndex - 1) * pageSize}
     </select>
 
-    <insert id="batchCreateTask">
+    <insert id="batchCreateTask" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO tasks
             (scope, task_type, task_status, payload, result, extra)
         VALUES
         <foreach collection="list" separator="," item="item">
-            (#{item.scope}, #{item.taskType}, #{item.taskStatus}, #{item.payload}, #{item.result}, #{item.extra})
+            (#{item.scope}, #{item.type}, #{item.status}, #{item.payload}, #{item.result}, #{item.extra})
         </foreach>
     </insert>
     
     <update id="updateTaskStatus">
         UPDATE tasks
-        SET task_status = #{taskStatus}
+        SET task_status = #{status}
         WHERE id = #{id}
     </update>
 </mapper>

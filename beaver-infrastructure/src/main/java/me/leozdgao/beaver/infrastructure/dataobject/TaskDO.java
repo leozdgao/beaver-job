@@ -1,6 +1,5 @@
 package me.leozdgao.beaver.infrastructure.dataobject;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,6 +15,10 @@ public class TaskDO extends BaseDO {
      * 任务类型
      */
     private String type;
+    /**
+     * 域
+     */
+    private String scope;
     /**
      * 任务状态
      */

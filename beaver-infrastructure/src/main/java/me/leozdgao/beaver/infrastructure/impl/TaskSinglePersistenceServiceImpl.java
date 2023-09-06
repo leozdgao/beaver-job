@@ -1,4 +1,4 @@
-package me.leozdgao.beaver.infrastructure;
+package me.leozdgao.beaver.infrastructure.impl;
 
 import jakarta.inject.Inject;
 import me.leozdgao.beaver.infrastructure.converter.TaskConverter;
@@ -8,6 +8,7 @@ import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.spi.model.TaskStatus;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +48,10 @@ public class TaskSinglePersistenceServiceImpl implements TaskPersistenceCommandS
 
     @Override
     public void updateTaskStatus(Task task, TaskStatus status) {
+        if (task == null || task.getId() == null) {
+            throw new InvalidParameterException("找不到要更新的任务");
+        }
+
         taskMapper.updateTaskStatus(task.getId(), status.getCode());
     }
 }

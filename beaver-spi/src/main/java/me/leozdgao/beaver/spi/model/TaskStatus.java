@@ -37,7 +37,11 @@ public enum TaskStatus {
         return code;
     }
 
-    public static TaskStatus of(int code) {
+    public static TaskStatus of(Integer code) {
+        if (code == null) {
+            return null;
+        }
+
         for (TaskStatus status : values()) {
             if (status.getCode() == code) {
                 return status;

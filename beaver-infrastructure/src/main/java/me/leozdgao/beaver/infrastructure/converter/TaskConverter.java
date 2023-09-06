@@ -32,6 +32,7 @@ public class TaskConverter {
         return Task.builder()
             .id(taskDO.getId())
             .type(taskDO.getType())
+            .scope(taskDO.getScope())
             .status(TaskStatus.of(taskDO.getStatus()))
             .payload(gson.fromJson(taskDO.getPayload(), new TypeToken<Map<String, Object>>() {}.getType()))
             .result(gson.fromJson(taskDO.getResult(), new TypeToken<Map<String, Object>>() {}.getType()))
@@ -47,6 +48,7 @@ public class TaskConverter {
         TaskDO taskDO = new TaskDO();
         taskDO.setId(task.getId());
         taskDO.setType(task.getType());
+        taskDO.setScope(task.getScope());
         taskDO.setStatus(task.getStatus().getCode());
         taskDO.setPayload(gson.toJson(task.getPayload()));
         taskDO.setResult(gson.toJson(task.getResult()));

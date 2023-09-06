@@ -1,4 +1,4 @@
-package me.leozdgao.beaver.infrastructure;
+package me.leozdgao.beaver.infrastructure.impl;
 
 import jakarta.inject.Inject;
 import me.leozdgao.beaver.client.dto.PageData;

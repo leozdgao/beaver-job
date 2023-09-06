@@ -7,6 +7,7 @@ import me.leozdgao.beaver.dispatcher.config.DispatcherModule;
 import me.leozdgao.beaver.infrastructure.BeaverProperties;
 import me.leozdgao.beaver.infrastructure.config.JsonModule;
 import me.leozdgao.beaver.infrastructure.config.PersistenceModule;
+import me.leozdgao.beaver.service.TaskService;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.TaskPersistenceQueryService;
 import org.springframework.context.annotation.Bean;
@@ -39,12 +40,7 @@ public class BeaverCoreConfig {
     }
 
     @Bean
-    public TaskPersistenceQueryService taskPersistenceQueryService(Injector injector) {
-        return injector.getInstance(TaskPersistenceQueryService.class);
-    }
-
-    @Bean
-    public TaskPersistenceCommandService taskPersistenceCommandService(Injector injector) {
-        return injector.getInstance(TaskPersistenceCommandService.class);
+    public TaskService taskPersistenceQueryService(Injector injector) {
+        return injector.getInstance(TaskService.class);
     }
 }
