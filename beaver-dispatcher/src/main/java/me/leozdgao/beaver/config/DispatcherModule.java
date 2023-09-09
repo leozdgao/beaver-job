@@ -1,4 +1,4 @@
-package me.leozdgao.beaver.dispatcher.config;
+package me.leozdgao.beaver.config;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

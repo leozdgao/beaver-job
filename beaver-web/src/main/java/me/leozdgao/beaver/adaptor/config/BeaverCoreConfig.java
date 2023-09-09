@@ -3,13 +3,12 @@ package me.leozdgao.beaver.adaptor.config;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import me.leozdgao.beaver.dispatcher.TaskDispatcher;
-import me.leozdgao.beaver.dispatcher.config.DispatcherModule;
-import me.leozdgao.beaver.infrastructure.BeaverProperties;
+import me.leozdgao.beaver.config.DispatcherModule;
+import me.leozdgao.beaver.spi.BeaverProperties;
 import me.leozdgao.beaver.infrastructure.config.JsonModule;
 import me.leozdgao.beaver.infrastructure.config.PersistenceModule;
 import me.leozdgao.beaver.service.TaskService;
-import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
-import me.leozdgao.beaver.spi.TaskPersistenceQueryService;
+import me.leozdgao.beaver.worker.config.WorkerModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,7 +26,8 @@ public class BeaverCoreConfig {
         return Guice.createInjector(
                 new DispatcherModule(),
                 new PersistenceModule(properties),
-                new JsonModule()
+                new JsonModule(),
+                new WorkerModule(properties)
         );
     }
 

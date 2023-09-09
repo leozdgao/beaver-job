@@ -1,4 +1,4 @@
-package me.leozdgao.beaver.infrastructure;
+package me.leozdgao.beaver.spi;
 
 import java.io.IOException;
 import java.util.Properties;

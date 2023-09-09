@@ -2,8 +2,8 @@ package me.leozdgao.beaver;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import me.leozdgao.beaver.dispatcher.config.DispatcherModule;
-import me.leozdgao.beaver.infrastructure.BeaverProperties;
+import me.leozdgao.beaver.config.DispatcherModule;
+import me.leozdgao.beaver.spi.BeaverProperties;
 import me.leozdgao.beaver.infrastructure.config.JsonModule;
 import me.leozdgao.beaver.infrastructure.config.PersistenceModule;
 import me.leozdgao.beaver.spi.TaskPersistenceQueryService;
@@ -15,7 +15,7 @@ import java.io.IOException;
 /**
  * @author zhendong.gzd
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"me.leozdgao.beaver.adaptor.*"})
 public class Application {
     public static void main(String[] args) throws Exception {
         // 正常而言这里应该是启动 Web 应用

@@ -11,6 +11,7 @@ import me.leozdgao.beaver.spi.model.TaskStatus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author leozdgao
@@ -62,12 +63,8 @@ public class TaskConverter {
             return null;
         }
 
-        List<Task> taskList = new ArrayList<>();
-
-        for (TaskDO taskDO : taskDOList) {
-            taskList.add(convert(taskDO));
-        }
-
-        return taskList;
+        return taskDOList.stream()
+                .map(this::convert)
+                .collect(Collectors.toList());
     }
 }

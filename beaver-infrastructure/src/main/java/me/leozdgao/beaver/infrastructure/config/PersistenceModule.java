@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.inject.Singleton;
-import me.leozdgao.beaver.infrastructure.BeaverProperties;
+import me.leozdgao.beaver.spi.BeaverProperties;
 import me.leozdgao.beaver.infrastructure.SqlSessionTemplate;
 import me.leozdgao.beaver.infrastructure.impl.TaskPersistenceQueryServiceImpl;
 import me.leozdgao.beaver.infrastructure.impl.TaskSinglePersistenceServiceImpl;

@@ -5,7 +5,7 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import me.leozdgao.beaver.dispatcher.config.DispatcherModule.RingBufferSize;
+import me.leozdgao.beaver.config.DispatcherModule.RingBufferSize;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.spi.model.TaskStatus;

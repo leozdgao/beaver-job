@@ -23,6 +23,7 @@
     <module>beaver-spi</module>
     <module>beaver-start</module>
     <module>beaver-client</module>
+    <module>beaver-worker</module>
   </modules>
 
   <dependencyManagement>
@@ -40,6 +41,11 @@
       <dependency>
         <groupId>me.leozdgao.beaver</groupId>
         <artifactId>beaver-dispatcher</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>me.leozdgao.beaver</groupId>
+        <artifactId>beaver-worker</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -62,6 +68,16 @@
         <groupId>com.google.inject</groupId>
         <artifactId>guice</artifactId>
         <version>7.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-all</artifactId>
+        <version>4.1.86.Final</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-x-discovery</artifactId>
+        <version>4.3.0</version>
       </dependency>
       <!-- 工具库 -->
       <dependency>

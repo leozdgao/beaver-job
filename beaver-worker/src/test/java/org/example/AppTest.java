@@ -1,4 +1,4 @@
-package me.leozdgao.beaver.dispatcher;
+package org.example;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
