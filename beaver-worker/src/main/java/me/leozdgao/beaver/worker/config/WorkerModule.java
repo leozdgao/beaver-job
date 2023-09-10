@@ -5,7 +5,10 @@ import me.leozdgao.beaver.spi.BeaverProperties;
 import me.leozdgao.beaver.worker.lb.RandomLoadBalancer;
 import me.leozdgao.beaver.worker.lb.WorkerLoadBalancer;
 import me.leozdgao.beaver.worker.sd.ServiceDiscovery;
+import me.leozdgao.beaver.worker.sd.ServiceRegistry;
 import me.leozdgao.beaver.worker.sd.ZookeeperServiceDiscovery;
+import me.leozdgao.beaver.worker.sd.ZookeeperServiceRegistry;
+import org.apache.commons.io.IOUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -31,13 +34,15 @@ public class WorkerModule extends AbstractModule {
     protected void configure() {
         String type = beaverProperties.getProperty("sd.type");
         if ("zk".equals(type)) {
-            bind(ServiceDiscovery.class).toInstance(zookeeperServiceDiscovery());
+            CuratorFramework client = curatorFramework();
+            bind(ServiceDiscovery.class).toInstance(zookeeperServiceDiscovery(client));
+            bind(ServiceRegistry.class).toInstance(zookeeperServiceRegistry(client));
         }
 
         bind(WorkerLoadBalancer.class).to(RandomLoadBalancer.class);
     }
 
-    private ZookeeperServiceDiscovery zookeeperServiceDiscovery() {
+    private CuratorFramework curatorFramework() {
         String zkConnectionString = beaverProperties.getProperty("sd.zk.connection");
         if (zkConnectionString == null) {
             throw new IllegalArgumentException(
@@ -54,23 +59,28 @@ public class WorkerModule extends AbstractModule {
                 client.create().withMode(CreateMode.PERSISTENT).forPath(ZK_BASE_NODE_PATH);
             }
         } catch (Exception e) {
+            IOUtils.closeQuietly(client);
             throw new RuntimeException(String.format("zk init failed: %s", e));
         }
 
-        org.apache.curator.x.discovery.ServiceDiscovery<Object> serviceDiscovery =
-                ServiceDiscoveryBuilder.builder(Object.class)
+        return client;
+    }
+
+    private org.apache.curator.x.discovery.ServiceDiscovery<Object> curatorServiceDiscovery(CuratorFramework client) {
+        return ServiceDiscoveryBuilder.builder(Object.class)
                         .client(client)
                         .basePath(ZK_BASE_NODE_PATH)
                         .watchInstances(true)
                         .build();
+    }
 
-        ZookeeperServiceDiscovery zookeeperServiceDiscovery = new ZookeeperServiceDiscovery(serviceDiscovery);
-        try {
-            zookeeperServiceDiscovery.start();
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("zk serviceDiscovery start failed: %s", e));
-        }
+    private ZookeeperServiceDiscovery zookeeperServiceDiscovery(CuratorFramework client) {
+        org.apache.curator.x.discovery.ServiceDiscovery<Object> serviceDiscovery = curatorServiceDiscovery(client);
+        return new ZookeeperServiceDiscovery(client, serviceDiscovery);
+    }
 
-        return zookeeperServiceDiscovery;
+    private ZookeeperServiceRegistry zookeeperServiceRegistry(CuratorFramework client) {
+        org.apache.curator.x.discovery.ServiceDiscovery<Object> serviceDiscovery = curatorServiceDiscovery(client);
+        return new ZookeeperServiceRegistry(client, serviceDiscovery);
     }
 }

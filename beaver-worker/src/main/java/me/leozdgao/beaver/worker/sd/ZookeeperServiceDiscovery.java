@@ -3,14 +3,14 @@ package me.leozdgao.beaver.worker.sd;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.worker.Worker;
+import org.apache.commons.io.IOUtils;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.state.ConnectionState;
+import org.apache.curator.x.discovery.ServiceCache;
 import org.apache.curator.x.discovery.ServiceInstance;
+import org.apache.curator.x.discovery.details.ServiceCacheListener;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -22,44 +22,61 @@ import java.util.stream.Collectors;
 @Singleton
 public class ZookeeperServiceDiscovery implements ServiceDiscovery {
     private final org.apache.curator.x.discovery.ServiceDiscovery<Object> curatorServiceDiscovery;
+    private final CuratorFramework client;
+    private Map<String, ServiceCache<Object>> serviceCaches = new HashMap<>();
     private Map<String, Map<String, Worker>> workers = new HashMap<>();
 
     public ZookeeperServiceDiscovery(
+            CuratorFramework client,
             org.apache.curator.x.discovery.ServiceDiscovery<Object> curatorServiceDiscovery) {
         this.curatorServiceDiscovery = curatorServiceDiscovery;
+        this.client = client;
     }
 
     public void start() throws Exception {
         curatorServiceDiscovery.start();
+
         Collection<String> scopes = curatorServiceDiscovery.queryForNames();
         scopes.forEach(scope -> {
+            ServiceCache<Object> serviceCache = curatorServiceDiscovery.serviceCacheBuilder()
+                    .name(scope)
+                    .build();
+            serviceCache.addListener(new ScopeServiceCacheListener(scope));
             try {
-                workers.put(scope, syncWorkers(scope));
+                serviceCache.start();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            serviceCaches.put(scope, serviceCache);
+
+            try {
+                workers.put(scope, syncWorkers(scope, serviceCache.getInstances()));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    public void close() throws IOException {
-        this.curatorServiceDiscovery.close();
+    public void close() {
+        IOUtils.closeQuietly(curatorServiceDiscovery);
+        serviceCaches.values().forEach(IOUtils::closeQuietly);
+        IOUtils.closeQuietly(client);
     }
 
     private Map<String, Worker> syncWorkers(String scope) throws Exception {
-        Collection<ServiceInstance<Object>> serviceInstances =
-                this.curatorServiceDiscovery.queryForInstances(scope);
+        Collection<ServiceInstance<Object>> serviceInstances = this.curatorServiceDiscovery.queryForInstances(scope);
+        return syncWorkers(scope, serviceInstances);
+    }
+
+    private Map<String, Worker> syncWorkers(String scope, Collection<ServiceInstance<Object>> serviceInstances) {
         return serviceInstances.stream()
                 .map(this::serviceInstanceToWorker)
                 .collect(Collectors.toMap(Worker::getId, Function.identity()));
-
     }
 
     private Worker serviceInstanceToWorker(ServiceInstance<Object> serviceInstance) {
-        return Worker.builder()
-                .id(serviceInstance.getId())
-                .host(serviceInstance.getAddress())
-                .port(serviceInstance.getPort())
-                .build();
+        return ZookeeperWorkerConvertor.convert(serviceInstance);
     }
 
     @Override
@@ -69,11 +86,27 @@ public class ZookeeperServiceDiscovery implements ServiceDiscovery {
         if (scopeWorkers != null) {
             return scopeWorkers.values().stream().filter(Worker::isEnabled).collect(Collectors.toList());
         }
-        return null;
+
+        return new ArrayList<>();
     }
 
-    @Override
-    public void subscribe(String scope, Consumer<List<Worker>> consumer) {
+    public class ScopeServiceCacheListener implements ServiceCacheListener {
+        private final String scope;
 
+        public ScopeServiceCacheListener(String scope) {
+            this.scope = scope;
+        }
+
+        @Override
+        public void cacheChanged() {
+            ServiceCache<Object> serviceCache = serviceCaches.get(scope);
+            List<ServiceInstance<Object>> serviceInstances = serviceCache.getInstances();
+            workers.put(scope, syncWorkers(scope, serviceInstances));
+        }
+
+        @Override
+        public void stateChanged(CuratorFramework client, ConnectionState newState) {
+
+        }
     }
 }

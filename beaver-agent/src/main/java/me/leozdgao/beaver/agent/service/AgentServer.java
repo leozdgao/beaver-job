@@ -6,9 +6,18 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.slf4j.Slf4j;
+import me.leozdgao.beaver.agent.utils.IpUtils;
+import me.leozdgao.beaver.worker.Worker;
+import me.leozdgao.beaver.worker.sd.ServiceRegistry;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import java.net.BindException;
+import java.net.InetAddress;
+import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
  * Agent TCP 服务器，用于和 Dispatcher 连接，接受任务以及反馈任务结果
@@ -20,9 +29,17 @@ import javax.annotation.PostConstruct;
 @Slf4j
 @Component
 public class AgentServer {
-    private void startBind(int port, Runnable afterSuccess) {
-        NioEventLoopGroup bossGroup = new NioEventLoopGroup();
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+    private static final int AGENT_TCP_SERVER_PORT = 10020;
+
+    private static final String AGENT_DEFAULT_SCOPE = "DEFAULT";
+
+    @Resource
+    private ServiceRegistry serviceRegistry;
+
+    private NioEventLoopGroup bossGroup = new NioEventLoopGroup();
+    private NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+
+    private void startServer(int port, Consumer<Integer> afterSuccess) {
         ServerBootstrap bootstrap = new ServerBootstrap();
         ChannelFuture future = bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
@@ -35,10 +52,12 @@ public class AgentServer {
                 .bind(port);
         future.addListener(f -> {
             if (f.isSuccess()) {
-                log.info("agent server listening...");
+                log.info("agent server listening in {}", port);
                 try {
-                    afterSuccess.run();
+                    afterSuccess.accept(port);
                 } catch (Exception e) {
+                    bossGroup.shutdownGracefully();
+                    workerGroup.shutdownGracefully();
                     ChannelFuture closeFuture = future.channel().close().sync();
                     if (closeFuture.isSuccess()) {
                         log.info("agent server closed");
@@ -47,20 +66,52 @@ public class AgentServer {
                     }
                 }
             } else {
-                // if () {
-                //     startBind(port + 1, afterSuccess);
-                // }
-
-                log.error("agent start failed: {}", f.cause().toString());
-                throw new RuntimeException(String.format("Agent Server 启动失败: %s", f.cause().toString()));
+                if (f.cause() instanceof BindException) {
+                    startServer(port + 1, afterSuccess);
+                } else {
+                    log.error("agent start failed: {}", f.cause().toString());
+                    throw new RuntimeException(String.format("Agent Server 启动失败: %s", f.cause().toString()));
+                }
             }
         });
     }
 
     @PostConstruct
     public void init() {
-        startBind(10020, () -> {
+        startServer(AGENT_TCP_SERVER_PORT, (port) -> {
+            try {
+                serviceRegistry.start();
+            } catch (Exception e) {
+                log.error("agent register start failed: {}", e.toString());
+                throw new RuntimeException(String.format("Agent Server 服务注册启动失败: %s", e));
+            }
+
+            Collection<InetAddress> addresses;
+            try {
+                addresses = IpUtils.getAllLocalIPs();
+            } catch (Exception e) {
+                log.error("agent register failed, get local id failed: {}", e.toString());
+                throw new RuntimeException(String.format("Agent Server 服务注册失败: %s", e));
+            }
+
+            if (addresses.size() == 0) {
+                throw new RuntimeException("Agent Server 服务注册失败: 无法获取本地 IP");
+            }
+
+            String ip = addresses.iterator().next().getHostAddress();
+
             // 启动成功后立刻进行服务注册
+            try {
+                serviceRegistry.regsiter(new Worker(AGENT_DEFAULT_SCOPE, ip, port));
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Agent Server 服务注册失败: %s", e));
+            }
         });
+    }
+
+    @PreDestroy
+    public void close() {
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
     }
 }

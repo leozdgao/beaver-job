@@ -9,6 +9,7 @@ import me.leozdgao.beaver.infrastructure.config.JsonModule;
 import me.leozdgao.beaver.infrastructure.config.PersistenceModule;
 import me.leozdgao.beaver.service.TaskService;
 import me.leozdgao.beaver.worker.config.WorkerModule;
+import me.leozdgao.beaver.worker.sd.ServiceDiscovery;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -42,5 +43,18 @@ public class BeaverCoreConfig {
     @Bean
     public TaskService taskPersistenceQueryService(Injector injector) {
         return injector.getInstance(TaskService.class);
+    }
+
+    @Bean
+    public ServiceDiscovery serviceDiscovery(Injector injector) {
+        ServiceDiscovery serviceDiscovery = injector.getInstance(ServiceDiscovery.class);
+
+        try {
+            serviceDiscovery.start();
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("ServiceDiscovery start failed: %s", e));
+        }
+
+        return serviceDiscovery;
     }
 }

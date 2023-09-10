@@ -10,17 +10,12 @@ import java.util.function.Consumer;
  * @author leozdgao
  */
 public interface ServiceDiscovery {
+    void start() throws Exception;
+    void close();
     /**
      * 根据域查询当前的 worker 列表
      * @param scope 域
      * @return worker 列表
      */
     List<Worker> getCurrentWorkers(String scope);
-
-    /**
-     * 订阅某个域下的服务表更
-     * @param scope 域
-     * @param consumer 可用 worker 变更回调
-     */
-    void subscribe(String scope, Consumer<List<Worker>> consumer);
 }
