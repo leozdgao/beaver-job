@@ -3,12 +3,15 @@ package me.leozdgao.beaver.worker.sd;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.worker.Worker;
+import me.leozdgao.beaver.worker.config.WorkerModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.x.discovery.ServiceCache;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.details.ServiceCacheListener;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.data.Stat;
 
 import java.util.*;
 import java.util.function.Function;
@@ -36,6 +39,8 @@ public class ZookeeperServiceDiscovery implements ServiceDiscovery {
     public void start() throws Exception {
         curatorServiceDiscovery.start();
 
+        ensureScopeNode("DEFAULT");
+
         Collection<String> scopes = curatorServiceDiscovery.queryForNames();
         scopes.forEach(scope -> {
             ServiceCache<Object> serviceCache = curatorServiceDiscovery.serviceCacheBuilder()
@@ -62,6 +67,15 @@ public class ZookeeperServiceDiscovery implements ServiceDiscovery {
         IOUtils.closeQuietly(curatorServiceDiscovery);
         serviceCaches.values().forEach(IOUtils::closeQuietly);
         IOUtils.closeQuietly(client);
+    }
+
+    private void ensureScopeNode(String scope) throws Exception {
+        String scopePath = String.format("%s/%s", WorkerModule.ZK_BASE_NODE_PATH, scope);
+        Stat stat = client.checkExists().forPath(scopePath);
+
+        if (stat == null) {
+            client.create().withMode(CreateMode.PERSISTENT).forPath(scopePath);
+        }
     }
 
     private Map<String, Worker> syncWorkers(String scope) throws Exception {

@@ -9,7 +9,7 @@ import com.google.inject.TypeLiteral;
 import com.lmax.disruptor.EventHandler;
 import jakarta.inject.Qualifier;
 import me.leozdgao.beaver.dispatcher.TaskEvent;
-import me.leozdgao.beaver.dispatcher.TaskEventHandler;
+import me.leozdgao.beaver.dispatcher.TaskEventLauncher;
 
 /**
  * 调度器依赖注入模块配置
@@ -33,6 +33,6 @@ public class DispatcherModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(new TypeLiteral<EventHandler<TaskEvent>>() {})
-            .to(new TypeLiteral<TaskEventHandler>() {});
+            .to(new TypeLiteral<TaskEventLauncher>() {});
     }
 }

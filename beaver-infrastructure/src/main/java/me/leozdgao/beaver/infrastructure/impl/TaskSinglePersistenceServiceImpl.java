@@ -47,6 +47,12 @@ public class TaskSinglePersistenceServiceImpl implements TaskPersistenceCommandS
     }
 
     @Override
+    public void taskFailed(Task task, String msg, Throwable cause) {
+        // 这里要开启事务，先查询，再根据查询的状态校验状态转移的合法性，再更新为失败态
+
+    }
+
+    @Override
     public void updateTaskStatus(Task task, TaskStatus status) {
         if (task == null || task.getId() == null) {
             throw new InvalidParameterException("找不到要更新的任务");

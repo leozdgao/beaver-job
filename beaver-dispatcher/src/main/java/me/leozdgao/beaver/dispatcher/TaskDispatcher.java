@@ -1,6 +1,5 @@
 package me.leozdgao.beaver.dispatcher;
 
-import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 import jakarta.inject.Inject;
@@ -19,7 +18,7 @@ public class TaskDispatcher {
 
     private TaskPersistenceCommandService taskPersistenceService;
 
-    private EventHandler<TaskEvent> eventHandler;
+    private TaskEventLauncher eventLauncher;
 
     private int ringBufferSize = 1024;
 
@@ -30,11 +29,11 @@ public class TaskDispatcher {
     @Inject
     public TaskDispatcher(
         TaskPersistenceCommandService taskPersistenceService,
-        EventHandler<TaskEvent> eventHandler,
+        TaskEventLauncher eventLauncher,
         @RingBufferSize int ringBufferSize) {
 
         this.taskPersistenceService = taskPersistenceService;
-        this.eventHandler = eventHandler;
+        this.eventLauncher = eventLauncher;
         this.ringBufferSize = ringBufferSize;
     }
 
@@ -58,7 +57,7 @@ public class TaskDispatcher {
             TaskEventFactory taskEventFactory = new TaskEventFactory();
             // FIXME: 线程池
             disruptor = new Disruptor<>(taskEventFactory, ringBufferSize, DaemonThreadFactory.INSTANCE);
-            disruptor.handleEventsWith(eventHandler);
+            disruptor.handleEventsWith(eventLauncher);
             disruptor.start();
 
             inited = true;
@@ -68,7 +67,8 @@ public class TaskDispatcher {
     /**
      * 销毁
      */
-    public void dispose() {
+    public void close() {
+        eventLauncher.close();
         disruptor.shutdown();
     }
 

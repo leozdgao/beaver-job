@@ -22,7 +22,7 @@ import org.apache.zookeeper.data.Stat;
  * @author leozdgao
  */
 public class WorkerModule extends AbstractModule {
-    private static final String ZK_BASE_NODE_PATH = "/beaver_sd";
+    public static final String ZK_BASE_NODE_PATH = "/beaver_sd";
 
     private final BeaverProperties beaverProperties;
 

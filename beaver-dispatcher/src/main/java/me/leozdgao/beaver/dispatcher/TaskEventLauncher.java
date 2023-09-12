@@ -14,14 +14,20 @@ import me.leozdgao.beaver.worker.WorkerManager;
  * @author leozdgao
  */
 @Slf4j
-public class TaskEventHandler implements EventHandler<TaskEvent> {
+public class TaskEventLauncher implements EventHandler<TaskEvent> {
     private final WorkerManager workerManager;
     private final TaskPersistenceCommandService taskPersistenceCommandService;
 
     @Inject
-    public TaskEventHandler(WorkerManager workerManager, TaskPersistenceCommandService taskPersistenceCommandService) {
+    public TaskEventLauncher(WorkerManager workerManager, TaskPersistenceCommandService taskPersistenceCommandService) {
         this.workerManager = workerManager;
         this.taskPersistenceCommandService = taskPersistenceCommandService;
+
+        workerManager.start();
+    }
+
+    public void close() {
+        workerManager.close();
     }
 
     public void onEvent(TaskEvent event, long l, boolean b) throws Exception {
@@ -32,8 +38,14 @@ public class TaskEventHandler implements EventHandler<TaskEvent> {
             // 发送任务成功，更新任务数据库状态为 RUNNING
             Task task = event.getTask();
             Worker worker = workerManager.getNextWorker(task.getScope());
+
+            if (worker == null) {
+                taskPersistenceCommandService.updateTaskStatus(task, TaskStatus.FAILED);
+                return;
+            }
+
             workerManager.connect(worker, () -> {
-                workerManager.sendCommand(worker, () -> {
+                workerManager.sendTask(worker, task, () -> {
                     taskPersistenceCommandService.updateTaskStatus(task, TaskStatus.RUNNING);
                 }, (e) -> {
                     // 发送指令失败，将任务重新放回等待队列

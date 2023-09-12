@@ -20,6 +20,11 @@ public class TaskShardingPersistenceServiceImpl implements TaskPersistenceComman
     }
 
     @Override
+    public void taskFailed(Task task, String msg, Throwable cause) {
+
+    }
+
+    @Override
     public void updateTaskStatus(Task task, TaskStatus status) {
 
     }
