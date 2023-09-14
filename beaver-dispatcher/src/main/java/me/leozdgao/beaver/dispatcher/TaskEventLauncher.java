@@ -49,6 +49,8 @@ public class TaskEventLauncher implements EventHandler<TaskEvent> {
                     taskPersistenceCommandService.updateTaskStatus(task, TaskStatus.RUNNING);
                 }, (e) -> {
                     // 发送指令失败，将任务重新放回等待队列
+
+                    // 还有一种可能是 worker 拒绝执行
                 });
             }, (e) -> {
                 // 连接失败，将任务重新放回等待队列

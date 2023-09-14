@@ -6,14 +6,13 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.Promise;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.worker.lb.WorkerLoadBalancer;
-import me.leozdgao.beaver.worker.protocol.ExecTaskCommandPacket;
-import me.leozdgao.beaver.worker.protocol.PacketCodecHandler;
-import me.leozdgao.beaver.worker.protocol.Splitter;
+import me.leozdgao.beaver.worker.protocol.*;
 import me.leozdgao.beaver.worker.sd.ServiceDiscovery;
 
 import java.util.List;
@@ -31,6 +30,7 @@ import java.util.function.Consumer;
 public class WorkerManager {
     private final ServiceDiscovery serviceDiscovery;
     private final WorkerLoadBalancer workerLoadBalancer;
+    private final TrustedSender trustedSender;
     private final Map<String, Channel> workerConnections = new ConcurrentHashMap<>();
     private Bootstrap clientBootstrap;
     private NioEventLoopGroup workerGroup;
@@ -38,9 +38,10 @@ public class WorkerManager {
     private final Map<String, Lock> workerConnectionLocks = new ConcurrentHashMap<>();
 
     @Inject
-    public WorkerManager(ServiceDiscovery serviceDiscovery, WorkerLoadBalancer workerLoadBalancer) {
+    public WorkerManager(ServiceDiscovery serviceDiscovery, WorkerLoadBalancer workerLoadBalancer, TrustedSender trustedSender) {
         this.serviceDiscovery = serviceDiscovery;
         this.workerLoadBalancer = workerLoadBalancer;
+        this.trustedSender = trustedSender;
     }
 
     public void start() {
@@ -56,7 +57,7 @@ public class WorkerManager {
                                 protected void initChannel(Channel ch) {
                                     ch.pipeline().addLast(new Splitter());
                                     ch.pipeline().addLast(PacketCodecHandler.INSTANCE);
-                                    // TODO: 接收任务的处理器
+                                    ch.pipeline().addLast(trustedSender.pipelineHandler());
                                 }
                             });
                 }
@@ -130,28 +131,35 @@ public class WorkerManager {
             return;
         }
 
-        // TODO: 改成 TrustedSender
-        ChannelFuture future;
-        try {
-            future = channel.writeAndFlush(
-                    ExecTaskCommandPacket.builder()
-                            .taskId(task.getId())
-                            .taskType(task.getType())
-                            .payload(task.getPayload())
-                            .extra(task.getExt())
-                            .build()
-            ).sync();
-            // 这里用同步其实会导致性能不太好
-        } catch (InterruptedException e) {
-            errorHandler.accept(e);
-            return;
-        }
+        ExecTaskCommandPacket packet = ExecTaskCommandPacket.builder()
+                .taskId(task.getId())
+                .taskType(task.getType())
+                .payload(task.getPayload())
+                .extra(task.getExt())
+                .build();
+        Promise<Boolean> acceptedPromise = trustedSender.sendUntilResponse(channel, packet, 5000);
+        acceptedPromise.addListener(f -> {
+            if (f.isSuccess()) {
+                after.run();
+            } else {
+                errorHandler.accept(f.cause());
+            }
+        });
 
-        if (future.isSuccess()) {
-            log.info("task send before run after");
-            after.run();
-        } else {
-            errorHandler.accept(future.cause());
-        }
+//        ChannelFuture future;
+//        try {
+//            future = channel.writeAndFlush(packet).sync();
+//            // 这里用同步其实会导致性能不太好
+//        } catch (InterruptedException e) {
+//            errorHandler.accept(e);
+//            return;
+//        }
+//
+//        if (future.isSuccess()) {
+//            log.info("task send before run after");
+//            after.run();
+//        } else {
+//            errorHandler.accept(future.cause());
+//        }
     }
 }

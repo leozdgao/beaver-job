@@ -1,19 +1,20 @@
 package me.leozdgao.beaver.worker.protocol;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 任务接收确认包
  * @author leozdgao
  */
-@Data
-@Builder
-public class TaskReceivedPacket extends Packet {
+@Getter
+@Setter
+public class TaskReceivedPacket extends TracingResponsePacket {
     private Long taskId;
-    private boolean isRunning;
-    private String code;
-    private String message;
+
+    public TaskReceivedPacket(String traceId) {
+        super(traceId);
+    }
 
     @Override
     public Byte getCommand() {
