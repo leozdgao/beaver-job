@@ -42,7 +42,12 @@ public interface TaskMapper {
     /**
      * 更新任务状态
      * @param id 任务ID
-     * @param status 任务状态
+     * @param from 之前的任务状态
+     * @param to 要更新的任务状态
+     * @param result 任务结果
      */
-    void updateTaskStatus(@Param("id") Long id, @Param("status") Integer status);
+    void updateTaskStatus(@Param("id") Long id,
+                          @Param("fromStatus") Integer from,
+                          @Param("toStatus") Integer to,
+                          @Param("result") String result);
 }

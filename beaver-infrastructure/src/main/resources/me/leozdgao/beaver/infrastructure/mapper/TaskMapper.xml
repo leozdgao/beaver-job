@@ -64,7 +64,11 @@
     
     <update id="updateTaskStatus">
         UPDATE tasks
-        SET task_status = #{status}
-        WHERE id = #{id}
+        SET
+            task_status = #{toStatus} <if test="result != null and '' != result"> AND
+            result = #{result}</if>
+        WHERE
+            id = #{id} AND
+            status = #{fromStatus}
     </update>
 </mapper>

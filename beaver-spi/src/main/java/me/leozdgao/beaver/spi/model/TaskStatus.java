@@ -1,9 +1,11 @@
 package me.leozdgao.beaver.spi.model;
 
+import lombok.Getter;
+
 /**
  * @author leozdgao
  */
-
+@Getter
 public enum TaskStatus {
     /**
      * 等待
@@ -24,17 +26,17 @@ public enum TaskStatus {
     /**
      * 执行失败
      */
-    FAILED(500)
+    FAILED(500),
+    /**
+     * 已取消
+     */
+    CANCEL(400)
     ;
 
     private final int code;
 
     TaskStatus(int code) {
         this.code = code;
-    }
-
-    public int getCode() {
-        return code;
     }
 
     public static TaskStatus of(Integer code) {

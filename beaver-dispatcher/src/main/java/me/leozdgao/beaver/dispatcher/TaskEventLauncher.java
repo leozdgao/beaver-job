@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.spi.model.TaskStatus;
+import me.leozdgao.beaver.spi.model.TaskTransitionEvent;
 import me.leozdgao.beaver.worker.Worker;
 import me.leozdgao.beaver.worker.WorkerManager;
 
@@ -40,13 +41,13 @@ public class TaskEventLauncher implements EventHandler<TaskEvent> {
             Worker worker = workerManager.getNextWorker(task.getScope());
 
             if (worker == null) {
-                taskPersistenceCommandService.updateTaskStatus(task, TaskStatus.FAILED);
+                taskPersistenceCommandService.updateTaskStatus(task, TaskTransitionEvent.FAIL);
                 return;
             }
 
             workerManager.connect(worker, () -> {
                 workerManager.sendTask(worker, task, () -> {
-                    taskPersistenceCommandService.updateTaskStatus(task, TaskStatus.RUNNING);
+                    taskPersistenceCommandService.updateTaskStatus(task, TaskTransitionEvent.DISPATCH);
                 }, (e) -> {
                     // 发送指令失败，将任务重新放回等待队列
 

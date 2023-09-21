@@ -4,21 +4,24 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.config.DispatcherModule.RingBufferSize;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.spi.model.TaskStatus;
+import me.leozdgao.beaver.spi.model.TaskTransitionEvent;
 
 /**
  * @author leozdgao
  */
+@Slf4j
 @Singleton
 public class TaskDispatcher {
     private Disruptor<TaskEvent> disruptor;
 
-    private TaskPersistenceCommandService taskPersistenceService;
+    private final TaskPersistenceCommandService taskPersistenceService;
 
-    private TaskEventLauncher eventLauncher;
+    private final TaskEventLauncher eventLauncher;
 
     private int ringBufferSize = 1024;
 
@@ -73,7 +76,6 @@ public class TaskDispatcher {
     }
 
     public Task accept(Task task) {
-        // 首先落库, 直接把状态设置为 WAITING
         Task generatedTask = taskPersistenceService.createTask(task, TaskStatus.REQUESTING);
 
         // 成功则修改任务状态为 WAITING
@@ -81,19 +83,17 @@ public class TaskDispatcher {
         // 失败则改状态为 REQ
         // FIXME: 入队失败是否抛出异常？入队超时时间？
         try {
-            String  name = Thread.currentThread().getName();
-            System.out.println("Current Thread name: " + name);
             disruptor.publishEvent((e, l) -> {
                 // NOTE: 这个函数不论执行成功与否，event 都会被 publish
                 e.setTask(generatedTask);
                 e.setSeq(l);
 
-                taskPersistenceService.updateTaskStatus(generatedTask, TaskStatus.WAITING);
+                taskPersistenceService.updateTaskStatus(generatedTask, TaskTransitionEvent.PLAN);
             });
             return generatedTask;
         } catch (Exception e) {
             // 如果最终入队列失败，记录日志
-            System.out.println(e.toString());
+            log.error("任务 {} 入队列失败：{}", generatedTask.getId(), e.toString());
         }
 
         return null;
