@@ -7,6 +7,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.WorkHandler;
 import jakarta.inject.Qualifier;
 import me.leozdgao.beaver.dispatcher.TaskEvent;
 import me.leozdgao.beaver.dispatcher.TaskEventLauncher;
@@ -32,7 +33,7 @@ public class DispatcherModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(new TypeLiteral<EventHandler<TaskEvent>>() {})
+        bind(new TypeLiteral<WorkHandler<TaskEvent>>() {})
             .to(new TypeLiteral<TaskEventLauncher>() {});
     }
 }

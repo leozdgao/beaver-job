@@ -8,7 +8,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.agent.service.handler.RecorderHandler;
-import me.leozdgao.beaver.agent.service.handler.TaskAcceptionHandler;
+import me.leozdgao.beaver.agent.service.handler.TaskAcceptationHandler;
 import me.leozdgao.beaver.agent.utils.IpUtils;
 import me.leozdgao.beaver.worker.Worker;
 import me.leozdgao.beaver.worker.protocol.PacketCodecHandler;
@@ -55,7 +55,7 @@ public class AgentServer {
                         ch.pipeline().addLast(new Splitter());
                         ch.pipeline().addLast(new RecorderHandler());
                         ch.pipeline().addLast(PacketCodecHandler.INSTANCE);
-                        ch.pipeline().addLast(TaskAcceptionHandler.INSTANCE);
+                        ch.pipeline().addLast(TaskAcceptationHandler.INSTANCE);
                     }
                 })
                 .bind(port);

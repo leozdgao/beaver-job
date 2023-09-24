@@ -83,11 +83,17 @@ public class PersistenceModule extends AbstractModule {
                 .from(TaskStatus.WAITING)
                 .to(TaskStatus.REQUESTING)
                 .on(TaskTransitionEvent.REARRANGE);
-        // 任务调度失败，无法安排执行
+        // 1. 任务调度失败，无法安排执行
+        // 2. 任务调度成功，ack 返回前已经执行完成且结果相应包先到
         builder.externalTransition()
                 .from(TaskStatus.WAITING)
                 .to(TaskStatus.FAILED)
-                .on(TaskTransitionEvent.DISPATCH_FAIL);
+                .on(TaskTransitionEvent.FAIL);
+        // 任务调度成功，ack 返回前已经执行完成且结果相应包先到
+        builder.externalTransition()
+                .from(TaskStatus.WAITING)
+                .to(TaskStatus.SUCCESS)
+                .on(TaskTransitionEvent.SUCCESS);
         // 任务完成分配下发，进入执行中状态
         builder.externalTransition()
                 .from(TaskStatus.WAITING)

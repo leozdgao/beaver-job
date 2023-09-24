@@ -14,23 +14,23 @@ public enum TaskStatus {
     /**
      * 已入队列
      */
-    WAITING(100),
+    WAITING(10),
     /**
      * 运行中
      */
-    RUNNING(101),
+    RUNNING(11),
     /**
      * 执行成功
      */
-    SUCCESS(200),
+    SUCCESS(20),
     /**
      * 执行失败
      */
-    FAILED(500),
+    FAILED(50),
     /**
      * 已取消
      */
-    CANCEL(400)
+    CANCEL(40)
     ;
 
     private final int code;

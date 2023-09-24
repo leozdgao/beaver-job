@@ -1,5 +1,6 @@
 package me.leozdgao.beaver.worker.protocol;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -9,6 +10,7 @@ import io.netty.channel.nio.NioEventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
+import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 
 import java.util.Map;
 import java.util.concurrent.*;
@@ -22,6 +24,14 @@ import java.util.concurrent.*;
 @Singleton
 public class TrustedSender {
     private final Map<String, Promise<Boolean>> promises = new ConcurrentHashMap<>();
+
+    private  final TaskPersistenceCommandService taskPersistenceCommandService;
+
+    @Inject
+    public TrustedSender(TaskPersistenceCommandService taskPersistenceCommandService) {
+        this.taskPersistenceCommandService = taskPersistenceCommandService;
+    }
+
 
     /**
      * 发送直到接收方相应ack
@@ -60,9 +70,26 @@ public class TrustedSender {
         channel.writeAndFlush(packet);
     }
 
-    public SimpleChannelInboundHandler<TracingResponsePacket> pipelineHandler() {
+    public SimpleChannelInboundHandler<TracingResponsePacket> tracingHandler() {
         return new TaskReceptionHandler();
     }
+
+    public SimpleChannelInboundHandler<TaskResponsePacket> responseHandler() {
+        return new TaskExecutionResponseHandler();
+    }
+
+    public class TaskExecutionResponseHandler extends SimpleChannelInboundHandler<TaskResponsePacket> {
+
+        @Override
+        protected void channelRead0(ChannelHandlerContext ctx, TaskResponsePacket msg) throws Exception {
+            if (msg.isSuccess()) {
+                taskPersistenceCommandService.taskSuccess(msg.getTaskId(), msg.getResult());
+            } else {
+                taskPersistenceCommandService.taskFailed(msg.getTaskId(), new RuntimeException(msg.getMessage()));
+            }
+        }
+    }
+
 
     public class TaskReceptionHandler extends SimpleChannelInboundHandler<TracingResponsePacket> {
 
@@ -75,7 +102,7 @@ public class TrustedSender {
             }
 
             Promise<Boolean> promise = promises.get(traceId);
-            if (promise.isDone()) {
+            if (promise == null || promise.isDone()) {
                 // promise 已经被设置结束，忽略
                 // TODO: 打日志
                 return;
@@ -84,8 +111,11 @@ public class TrustedSender {
             if (msg.isAccepted()) {
                 promise.setSuccess(true);
             } else {
-                promise.setFailure(new RuntimeException(msg.getMessage()));
+                promise.setFailure(new WorkerResponseException(traceId, msg.getCode(), msg.getMessage()));
             }
+
+            // 完成了的进行清理
+            promises.remove(traceId);
         }
     }
 }

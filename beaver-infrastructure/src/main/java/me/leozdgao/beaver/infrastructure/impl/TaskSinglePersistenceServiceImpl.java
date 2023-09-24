@@ -55,8 +55,6 @@ public class TaskSinglePersistenceServiceImpl implements TaskPersistenceCommandS
     @Override
     public Task createTask(Task task, TaskStatus status) {
         // TODO: 雪花算法生成 ID
-        System.out.printf("Create task: %s, status %s\n", task, status);
-
         task.setStatus(status);
         List<TaskDO> taskDOList = new ArrayList<>();
         taskDOList.add(taskConverter.convert(task));
@@ -67,47 +65,42 @@ public class TaskSinglePersistenceServiceImpl implements TaskPersistenceCommandS
     }
 
     @Override
-    public void taskSuccess(Task task, Map<String, Object> payload) {
-        String result = gson.toJson(payload);
-        updateTaskStatus(task, TaskTransitionEvent.SUCCESS, result);
+    public void taskSuccess(Long taskId, String result) {
+        updateTaskStatus(taskId, TaskTransitionEvent.SUCCESS, result);
     }
 
     @Override
-    public void taskFailed(Task task, Throwable cause) {
+    public void taskFailed(Long taskId, Throwable cause) {
         Map<String, Object> payload = new HashMap<>(4);
         payload.put("msg", cause.toString());
 
         String result = gson.toJson(payload);
-        updateTaskStatus(task, TaskTransitionEvent.FAIL, result);
+        updateTaskStatus(taskId, TaskTransitionEvent.FAIL, result);
     }
 
     @Override
-    public void updateTaskStatus(Task task, TaskTransitionEvent event) {
-        updateTaskStatus(task, event, null);
+    public void updateTaskStatus(Long taskId, TaskTransitionEvent event) {
+        updateTaskStatus(taskId, event, null);
     }
 
-    private void updateTaskStatus(Task task, TaskTransitionEvent event, String result) {
+    private void updateTaskStatus(Long taskId, TaskTransitionEvent event, String result) {
         // 这里要开启事务，先查询，再根据查询的状态校验状态转移的合法性，再更新为失败态
-        if (task == null || task.getId() == null) {
+        if (taskId == null) {
             throw new InvalidParameterException("找不到要更新的任务");
-        }
-
-        if (task.getStatus() == null) {
-            throw new InvalidParameterException("任务状态异常为 null");
         }
 
         try (SqlSession sqlSession = sqlSessionFactory.openSession(false)) {
             try {
                 TaskMapper mapperInTrx = sqlSession.getMapper(TaskMapper.class);
-                TaskDO currentTask = mapperInTrx.findOneById(task.getId());
+                TaskDO currentTask = mapperInTrx.findOneById(taskId);
                 TaskStatus fromStatus = TaskStatus.of(currentTask.getStatus());
                 TaskStatus toStatus = stateMachine.fireEvent(fromStatus, event, null);
 
                 if (fromStatus.equals(toStatus)) {
                     // 无需更新任务状态
-                    log.warn("任务 {} 状态 {} 事件 {}，未满足状态机定义，状态未更新", task.getId(), fromStatus, event);
+                    log.warn("任务 {} 状态 {} 事件 {}，未满足状态机定义，状态未更新", taskId, fromStatus, event);
                 } else {
-                    mapperInTrx.updateTaskStatus(task.getId(), fromStatus.getCode(), toStatus.getCode(), result);
+                    mapperInTrx.updateTaskStatus(taskId, fromStatus.getCode(), toStatus.getCode(), result);
                 }
 
                 sqlSession.commit();

@@ -1,5 +1,7 @@
 package me.leozdgao.beaver.dispatcher;
 
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.WorkHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 import jakarta.inject.Inject;
@@ -11,19 +13,26 @@ import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.spi.model.TaskStatus;
 import me.leozdgao.beaver.spi.model.TaskTransitionEvent;
 
+import java.util.Arrays;
+
 /**
  * @author leozdgao
  */
 @Slf4j
 @Singleton
 public class TaskDispatcher {
+    private static final int DEFAULT_RING_BUFFER_SIZE = 1024;
+    private static final int DEFAULT_CORE_THREAD_SIZE = 8;
+
     private Disruptor<TaskEvent> disruptor;
+
+    private RingBuffer<TaskEvent> ringBuffer;
 
     private final TaskPersistenceCommandService taskPersistenceService;
 
     private final TaskEventLauncher eventLauncher;
 
-    private int ringBufferSize = 1024;
+    private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
 
     private boolean inited = false;
 
@@ -57,11 +66,14 @@ public class TaskDispatcher {
             // 主节点启动轮训节点 check REQ 状态的任务
 
             // 初始化等待队列
-            TaskEventFactory taskEventFactory = new TaskEventFactory();
-            // FIXME: 线程池
-            disruptor = new Disruptor<>(taskEventFactory, ringBufferSize, DaemonThreadFactory.INSTANCE);
-            disruptor.handleEventsWith(eventLauncher);
-            disruptor.start();
+            // FIXME: 自定义 ThreadFactory 和 WaitStrategy
+            disruptor = new Disruptor<>(new TaskEventFactory(), ringBufferSize, DaemonThreadFactory.INSTANCE);
+
+            WorkHandler<TaskEvent>[] consumers = new WorkHandler[DEFAULT_CORE_THREAD_SIZE];
+            Arrays.fill(consumers, eventLauncher);
+
+            disruptor.handleEventsWithWorkerPool(consumers);
+            ringBuffer = disruptor.start();
 
             inited = true;
         }
@@ -83,12 +95,12 @@ public class TaskDispatcher {
         // 失败则改状态为 REQ
         // FIXME: 入队失败是否抛出异常？入队超时时间？
         try {
-            disruptor.publishEvent((e, l) -> {
+            ringBuffer.publishEvent((e, l) -> {
                 // NOTE: 这个函数不论执行成功与否，event 都会被 publish
                 e.setTask(generatedTask);
                 e.setSeq(l);
 
-                taskPersistenceService.updateTaskStatus(generatedTask, TaskTransitionEvent.PLAN);
+                taskPersistenceService.updateTaskStatus(generatedTask.getId(), TaskTransitionEvent.PLAN);
             });
             return generatedTask;
         } catch (Exception e) {

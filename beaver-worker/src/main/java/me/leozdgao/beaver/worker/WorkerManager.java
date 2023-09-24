@@ -38,7 +38,9 @@ public class WorkerManager {
     private final Map<String, Lock> workerConnectionLocks = new ConcurrentHashMap<>();
 
     @Inject
-    public WorkerManager(ServiceDiscovery serviceDiscovery, WorkerLoadBalancer workerLoadBalancer, TrustedSender trustedSender) {
+    public WorkerManager(ServiceDiscovery serviceDiscovery,
+                         WorkerLoadBalancer workerLoadBalancer,
+                         TrustedSender trustedSender) {
         this.serviceDiscovery = serviceDiscovery;
         this.workerLoadBalancer = workerLoadBalancer;
         this.trustedSender = trustedSender;
@@ -57,7 +59,8 @@ public class WorkerManager {
                                 protected void initChannel(Channel ch) {
                                     ch.pipeline().addLast(new Splitter());
                                     ch.pipeline().addLast(PacketCodecHandler.INSTANCE);
-                                    ch.pipeline().addLast(trustedSender.pipelineHandler());
+                                    ch.pipeline().addLast(trustedSender.tracingHandler());
+                                    ch.pipeline().addLast(trustedSender.responseHandler());
                                 }
                             });
                 }

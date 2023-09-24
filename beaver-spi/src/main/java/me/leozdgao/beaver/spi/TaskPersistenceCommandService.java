@@ -17,22 +17,22 @@ public interface TaskPersistenceCommandService {
 
     /**
      * 将任务设置为成功态
-     * @param task 任务
+     * @param taskId 任务Id
      * @param result 结果
      */
-    void taskSuccess(Task task, Map<String, Object> result);
+    void taskSuccess(Long taskId, String result);
 
     /**
      * 将任务设置为失败态
-     * @param task 任务
+     * @param taskId 任务Id
      * @param cause 罪魁祸首
      */
-    void taskFailed(Task task, Throwable cause);
+    void taskFailed(Long taskId, Throwable cause);
 
     /**
      * 更新任务状态
-     * @param task 任务
+     * @param taskId 任务Id
      * @param status 目标状态
      */
-    void updateTaskStatus(Task task, TaskTransitionEvent status);
+    void updateTaskStatus(Long taskId, TaskTransitionEvent status);
 }
