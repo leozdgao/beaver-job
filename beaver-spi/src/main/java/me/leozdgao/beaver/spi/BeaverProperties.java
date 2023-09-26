@@ -18,6 +18,16 @@ public class BeaverProperties extends Properties {
     public static BeaverProperties loadFromFile() throws IOException {
         BeaverProperties beaverProperties = new BeaverProperties();
         beaverProperties.load(BeaverProperties.class.getResourceAsStream(DEFAULT_BEAVER_PROPERTIES));
+        
+        Properties properties = System.getProperties();
+        properties.forEach((key, value) -> {
+            String keyName = key.toString();
+            if (keyName.startsWith("beaver.")) {
+                keyName = keyName.substring("beaver.".length());
+                beaverProperties.put(keyName, value);
+            }
+        });
+
         return beaverProperties;
     }
 }

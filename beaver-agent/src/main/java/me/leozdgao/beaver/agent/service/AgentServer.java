@@ -87,7 +87,7 @@ public class AgentServer {
 
     @PostConstruct
     public void init() {
-        startServer(AGENT_TCP_SERVER_PORT, (port) -> {
+        startServer(AGENT_TCP_SERVER_PORT, (p) -> {
             try {
                 serviceRegistry.start();
             } catch (Exception e) {
@@ -95,19 +95,33 @@ public class AgentServer {
                 throw new RuntimeException(String.format("Agent Server 服务注册启动失败: %s", e));
             }
 
-            Collection<InetAddress> addresses;
+            String ip;
+            Integer port = p;
+
             try {
-                addresses = IpUtils.getAllLocalIPs();
+                port = Integer.valueOf(System.getenv("BEAVER_BIND_PORT"));
             } catch (Exception e) {
-                log.error("agent register failed, get local id failed: {}", e.toString());
-                throw new RuntimeException(String.format("Agent Server 服务注册失败: %s", e));
+                log.warn("get port from env failed: {}", e.toString());
             }
 
-            if (addresses.size() == 0) {
-                throw new RuntimeException("Agent Server 服务注册失败: 无法获取本地 IP");
-            }
+            String bindIpFromEnv = System.getenv("BEAVER_BIND_IP");
+            if (bindIpFromEnv != null && !bindIpFromEnv.isEmpty()) {
+                ip = bindIpFromEnv;
+            } else {
+                Collection<InetAddress> addresses;
+                try {
+                    addresses = IpUtils.getAllLocalIPs();
+                } catch (Exception e) {
+                    log.error("agent register failed, get local id failed: {}", e.toString());
+                    throw new RuntimeException(String.format("Agent Server 服务注册失败: %s", e));
+                }
 
-            String ip = addresses.iterator().next().getHostAddress();
+                if (addresses.isEmpty()) {
+                    throw new RuntimeException("Agent Server 服务注册失败: 无法获取本地 IP");
+                }
+
+                ip = addresses.iterator().next().getHostAddress();
+            }
 
             // 启动成功后立刻进行服务注册
             try {
