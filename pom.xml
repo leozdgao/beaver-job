@@ -100,11 +100,6 @@
         <artifactId>cola-component-statemachine</artifactId>
         <version>4.3.2</version>
       </dependency>
-      <dependency>
-        <groupId>org.apache.skywalking</groupId>
-        <artifactId>apm-toolkit-trace</artifactId>
-        <version>9.0.0</version>
-      </dependency>
       <!-- 服务部署（adaptor）依赖 -->
       <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -131,6 +126,11 @@
         <groupId>org.apache.skywalking</groupId>
         <artifactId>apm-toolkit-logback-1.x</artifactId>
         <version>9.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.alibaba.arms.apm</groupId>
+        <artifactId>arms-sdk</artifactId>
+        <version>1.7.5</version>
       </dependency>
       <!-- 数据源依赖 -->
       <dependency>

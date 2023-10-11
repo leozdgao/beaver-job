@@ -1,9 +1,10 @@
-package me.leozdgao.beaver.worker.protocol;
+package me.leozdgao.beaver.worker.protocol.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
+import me.leozdgao.beaver.worker.protocol.Packet;
 import me.leozdgao.beaver.worker.protocol.codec.PacketCodec;
 
 import java.util.List;

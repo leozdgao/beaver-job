@@ -6,11 +6,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
+import me.leozdgao.beaver.worker.utils.TraceUtils;
 
 import java.util.Map;
 import java.util.concurrent.*;
@@ -40,10 +38,13 @@ public class TrustedSender {
      * @param timeout 超时时间
      * @return 接收方是否已接收
      */
-    public Promise<Boolean> sendUntilResponse(Channel channel, TracingPacket packet, long timeout) {
+    public Promise<Boolean> sendUntilResponse(Channel channel, Packet packet, long timeout) {
+        String traceId = TraceUtils.getTraceId();
+        packet.setTraceId(traceId);
+
         EventLoop eventLoop = channel.eventLoop();
         Promise<Boolean> promise = eventLoop.newPromise();
-        promises.put(packet.getTraceId(), promise);
+        promises.put(traceId, promise);
 
         // 发送
         eventLoop.execute(() -> {

@@ -12,10 +12,6 @@ import lombok.Setter;
 public class TaskReceivedPacket extends TracingResponsePacket {
     private Long taskId;
 
-    public TaskReceivedPacket(String traceId) {
-        super(traceId);
-    }
-
     @Override
     public Byte getCommand() {
         return Command.TASK_RECEIVED;

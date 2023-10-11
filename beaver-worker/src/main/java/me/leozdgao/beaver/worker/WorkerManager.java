@@ -13,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.worker.lb.WorkerLoadBalancer;
 import me.leozdgao.beaver.worker.protocol.*;
+import me.leozdgao.beaver.worker.protocol.handler.PacketCodecHandler;
 import me.leozdgao.beaver.worker.sd.ServiceDiscovery;
+import me.leozdgao.beaver.worker.utils.TraceUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -148,21 +150,5 @@ public class WorkerManager {
                 errorHandler.accept(f.cause());
             }
         });
-
-//        ChannelFuture future;
-//        try {
-//            future = channel.writeAndFlush(packet).sync();
-//            // 这里用同步其实会导致性能不太好
-//        } catch (InterruptedException e) {
-//            errorHandler.accept(e);
-//            return;
-//        }
-//
-//        if (future.isSuccess()) {
-//            log.info("task send before run after");
-//            after.run();
-//        } else {
-//            errorHandler.accept(future.cause());
-//        }
     }
 }

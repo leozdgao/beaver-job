@@ -1,5 +1,6 @@
 package me.leozdgao.beaver.dispatcher;
 
+import com.alibaba.arms.tracing.Tracer;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.WorkHandler;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -12,6 +13,7 @@ import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;
 import me.leozdgao.beaver.spi.model.TaskStatus;
 import me.leozdgao.beaver.spi.model.TaskTransitionEvent;
+import org.slf4j.MDC;
 
 import java.util.Arrays;
 
@@ -67,7 +69,7 @@ public class TaskDispatcher {
 
             // 初始化等待队列
             // FIXME: 自定义 ThreadFactory 和 WaitStrategy
-            disruptor = new Disruptor<>(new TaskEventFactory(), ringBufferSize, DaemonThreadFactory.INSTANCE);
+            disruptor = new Disruptor<>(new TaskEventFactory(), ringBufferSize, TaskThreadFactory.INSTANCE);
 
             WorkHandler<TaskEvent>[] consumers = new WorkHandler[DEFAULT_CORE_THREAD_SIZE];
             Arrays.fill(consumers, eventLauncher);
@@ -90,6 +92,8 @@ public class TaskDispatcher {
     public Task accept(Task task) {
         Task generatedTask = taskPersistenceService.createTask(task, TaskStatus.REQUESTING);
 
+        log.info("accept task");
+
         // 成功则修改任务状态为 WAITING
         // 入等待队列
         // 失败则改状态为 REQ
@@ -100,8 +104,13 @@ public class TaskDispatcher {
                 e.setTask(generatedTask);
                 e.setSeq(l);
 
+                // TODO: 添加 tracing 上下文
+                String traceId = Tracer.builder().getSpan().getTraceId();
+                e.setTraceId(traceId);
+
                 taskPersistenceService.updateTaskStatus(generatedTask.getId(), TaskTransitionEvent.PLAN);
             });
+
             return generatedTask;
         } catch (Exception e) {
             // 如果最终入队列失败，记录日志

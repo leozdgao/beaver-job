@@ -11,7 +11,7 @@ import java.util.Map;
  */
 @Data
 @Builder
-public class ExecTaskCommandPacket extends TracingPacket {
+public class ExecTaskCommandPacket extends Packet {
     private Long taskId;
     private String taskType;
     private Map<String, Object> payload;

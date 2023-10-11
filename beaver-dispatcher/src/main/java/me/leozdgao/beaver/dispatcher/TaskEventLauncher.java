@@ -1,16 +1,17 @@
 package me.leozdgao.beaver.dispatcher;
 
-import com.lmax.disruptor.EventHandler;
+import com.alibaba.arms.tracing.Tracer;
 import com.lmax.disruptor.WorkHandler;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import me.leozdgao.beaver.spi.TaskPersistenceCommandService;
 import me.leozdgao.beaver.spi.model.Task;
-import me.leozdgao.beaver.spi.model.TaskStatus;
 import me.leozdgao.beaver.spi.model.TaskTransitionEvent;
 import me.leozdgao.beaver.worker.Worker;
 import me.leozdgao.beaver.worker.WorkerManager;
 import me.leozdgao.beaver.worker.protocol.WorkerResponseException;
+import me.leozdgao.beaver.worker.utils.TraceUtils;
+import org.slf4j.MDC;
 
 /**
  * 收到任务入队请求，开始执行调度逻辑
@@ -22,7 +23,9 @@ public class TaskEventLauncher implements WorkHandler<TaskEvent> {
     private final TaskPersistenceCommandService taskPersistenceCommandService;
 
     @Inject
-    public TaskEventLauncher(WorkerManager workerManager, TaskPersistenceCommandService taskPersistenceCommandService) {
+    public TaskEventLauncher(
+            WorkerManager workerManager,
+            TaskPersistenceCommandService taskPersistenceCommandService) {
         this.workerManager = workerManager;
         this.taskPersistenceCommandService = taskPersistenceCommandService;
 
@@ -34,8 +37,15 @@ public class TaskEventLauncher implements WorkHandler<TaskEvent> {
     }
 
     @Override
-    public void onEvent(TaskEvent event) throws Exception {
-        System.out.println("Handling Event " + Thread.currentThread());
+    public void onEvent(TaskEvent event) {
+        String traceId = event.getTraceId();
+
+        if (traceId != null) {
+            TraceUtils.setTraceId(traceId);
+        }
+
+        log.info("Handling Event, {}", event);
+
         try {
             // 根据动态负载均衡器，获取可接受任务的 worker
             // 建立与 worker 的连接，发送任务
@@ -46,14 +56,17 @@ public class TaskEventLauncher implements WorkHandler<TaskEvent> {
 
             if (worker == null) {
                 // FIXME: worker 为空，应该先重试
-                taskPersistenceCommandService.taskFailed(task.getId(), new RuntimeException("没有可用的 worker，任务无法下发"));
+                Exception exp = new RuntimeException("没有可用的 worker，任务无法下发");
+                log.warn(exp.toString());
+                taskPersistenceCommandService.taskFailed(task.getId(), exp);
+
                 return;
             }
 
             workerManager.connect(worker, () ->
-                workerManager.sendTask(worker, task, () ->
-                    taskPersistenceCommandService.updateTaskStatus(task.getId(), TaskTransitionEvent.DISPATCH)
-                , (e) -> {
+                workerManager.sendTask(worker, task, () -> {
+                    taskPersistenceCommandService.updateTaskStatus(task.getId(), TaskTransitionEvent.DISPATCH);
+                }, (e) -> {
                     // worker 拒绝执行，直接失败
                     if (e instanceof WorkerResponseException) {
                         WorkerResponseException exp = (WorkerResponseException) e;
@@ -71,8 +84,5 @@ public class TaskEventLauncher implements WorkHandler<TaskEvent> {
             // 任意失败，将任务重新放回等待队列
             e.printStackTrace();
         }
-
-        Thread.sleep(500);
-
     }
 }
